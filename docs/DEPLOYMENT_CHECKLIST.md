@@ -27,7 +27,7 @@ git commit -m "Initial commit: Real-Time Video Processing Platform"
 
 ### 3. Connect and Push
 ```bash
-git remote add origin https://github.com/AtharvaMohite07/real-time-video-processing.git
+git remote add origin https://github.com/AtharvaMohite07/Real-Time-Video-Processing.git
 git branch -M main
 git push -u origin main
 ```
@@ -37,8 +37,8 @@ git push -u origin main
 ### Quick Start for New Users
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/AtharvaMohite07/real-time-video-processing.git
-   cd real-time-video-processing
+   git clone https://github.com/AtharvaMohite07/Real-Time-Video-Processing.git
+   cd Real-Time-Video-Processing
    ```
 
 2. **Run automated setup**

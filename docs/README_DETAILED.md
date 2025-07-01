@@ -18,8 +18,8 @@ A scalable cloud-native video processing platform that demonstrates real-time vi
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/AtharvaMohite07/real-time-video-processing.git
-cd real-time-video-processing
+git clone https://github.com/AtharvaMohite07/Real-Time-Video-Processing.git
+cd Real-Time-Video-Processing
 ```
 
 2. Set up a virtual environment:

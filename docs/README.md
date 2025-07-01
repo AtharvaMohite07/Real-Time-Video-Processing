@@ -59,4 +59,4 @@ When making changes to the project:
 
 ---
 
-**Need help?** Create an [issue](https://github.com/AtharvaMohite07/real-time-video-processing/issues) or check the [contributing guidelines](../CONTRIBUTING.md).
+**Need help?** Create an [issue](https://github.com/AtharvaMohite07/Real-Time-Video-Processing/issues) or check the [contributing guidelines](../CONTRIBUTING.md).

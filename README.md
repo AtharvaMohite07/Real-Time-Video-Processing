@@ -82,8 +82,8 @@ graph TB
 
 ```bash
 # Clone the repository
-git clone https://github.com/AtharvaMohite07/real-time-video-processing.git
-cd real-time-video-processing
+git clone https://github.com/AtharvaMohite07/Real-Time-Video-Processing.git
+cd Real-Time-Video-Processing
 
 # Run automated setup
 python quick_setup.py
@@ -96,8 +96,8 @@ python app.py
 
 ```bash
 # Clone and start with Docker
-git clone https://github.com/AtharvaMohite07/real-time-video-processing.git
-cd real-time-video-processing
+git clone https://github.com/AtharvaMohite07/Real-Time-Video-Processing.git
+cd Real-Time-Video-Processing
 
 # Start all services
 docker-compose up --build
@@ -474,9 +474,9 @@ This project is licensed under the MIT License - see the [`LICENSE`](LICENSE) fi
 
 ## 📞 Support
 
-- **Documentation**: [Project Wiki](https://github.com/AtharvaMohite07/real-time-video-processing/wiki)
-- **Issues**: [GitHub Issues](https://github.com/AtharvaMohite07/real-time-video-processing/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/AtharvaMohite07/real-time-video-processing/discussions)
+- **Documentation**: [Project Wiki](https://github.com/AtharvaMohite07/Real-Time-Video-Processing/wiki)
+- **Issues**: [GitHub Issues](https://github.com/AtharvaMohite07/Real-Time-Video-Processing/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/AtharvaMohite07/Real-Time-Video-Processing/discussions)
 - **Email**: support@example.com
 
 ---

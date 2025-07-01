@@ -4,7 +4,7 @@
 
 ### 1. **Placeholder URLs Fixed**
 - ❌ **Before**: `https://github.com/yourusername/Real-Time-Video-Processing.git`
-- ✅ **After**: `https://github.com/AtharvaMohite07/real-time-video-processing.git`
+- ✅ **After**: `https://github.com/AtharvaMohite07/Real-Time-Video-Processing.git`
 - **Files Updated**: README.md, CONTRIBUTING.md
 
 ### 2. **Repository Name Consistency**
@@ -109,10 +109,10 @@ All .md files have been reviewed, fixed, and optimized. Your project documentati
 - 🗑️ **Cleaned**: Removed duplicate README_NEW.md file
 
 ### 🔗 **Your Repository URLs**
-- **Main Repository**: `https://github.com/AtharvaMohite07/real-time-video-processing`
-- **Issues**: `https://github.com/AtharvaMohite07/real-time-video-processing/issues`
-- **Wiki**: `https://github.com/AtharvaMohite07/real-time-video-processing/wiki`
-- **Discussions**: `https://github.com/AtharvaMohite07/real-time-video-processing/discussions`
+- **Main Repository**: `https://github.com/AtharvaMohite07/Real-Time-Video-Processing`
+- **Issues**: `https://github.com/AtharvaMohite07/Real-Time-Video-Processing/issues`
+- **Wiki**: `https://github.com/AtharvaMohite07/Real-Time-Video-Processing/wiki`
+- **Discussions**: `https://github.com/AtharvaMohite07/Real-Time-Video-Processing/discussions`
 
 ### 🚀 **Ready to Upload Commands**
 ```bash
@@ -120,7 +120,7 @@ cd "c:\Users\mohit\OneDrive\Desktop\Real-Time-Video-Processing"
 git init
 git add .
 git commit -m "Initial commit: Real-Time Video Processing Platform"
-git remote add origin https://github.com/AtharvaMohite07/real-time-video-processing.git
+git remote add origin https://github.com/AtharvaMohite07/Real-Time-Video-Processing.git
 git push -u origin main
 ```
 

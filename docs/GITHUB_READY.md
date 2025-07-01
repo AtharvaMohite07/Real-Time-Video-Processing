@@ -38,7 +38,7 @@ git commit -m "Initial commit: Real-Time Video Processing Platform"
 
 ### Step 3: Connect and Push
 ```powershell
-git remote add origin https://github.com/AtharvaMohite07/real-time-video-processing.git
+git remote add origin https://github.com/AtharvaMohite07/Real-Time-Video-Processing.git
 git branch -M main
 git push -u origin main
 ```
