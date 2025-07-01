@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Video Processing</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .video-container {
+            position: relative;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .video-stream {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .control-panel {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            padding: 20px;
+            color: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .stats-card {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+        }
+        
+        .processing-option {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .processing-option:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .range-slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+        
+        .btn {
+            border-radius: 25px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-video me-2"></i>
+                Real-time Video Processing
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text" id="connectionStatus">
+                    <i class="fas fa-circle text-success me-1"></i>
+                    Connected
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
+
+        <!-- Main Content -->
+        <div class="row">
+            <!-- Video Display -->
+            <div class="col-lg-8 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-camera me-2"></i>Live Video Stream
+                        </h5>
+                        <div>
+                            <button class="btn btn-success btn-sm me-2" onclick="startCamera()">
+                                <i class="fas fa-play me-1"></i>Start
+                            </button>
+                            <button class="btn btn-danger btn-sm me-2" onclick="stopCamera()">
+                                <i class="fas fa-stop me-1"></i>Stop
+                            </button>
+                            <button class="btn btn-primary btn-sm me-2" onclick="saveFrame()">
+                                <i class="fas fa-camera me-1"></i>Capture
+                            </button>
+                            <button class="btn btn-warning btn-sm" onclick="toggleProcessing()">
+                                <i class="fas fa-cogs me-1"></i>
+                                <span id="processingToggleText">Enable Processing</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="video-container">
+                            <img src="/video_feed" alt="Video Stream" class="video-stream" id="videoStream">
+                            <div class="position-absolute top-0 end-0 p-3">
+                                <span class="badge bg-success" id="streamStatus">Live</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Processing Statistics
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-primary mb-0" id="framesProcessed">0</h4>
+                                    <small class="text-muted">Frames Processed</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-success mb-0" id="facesDetected">0</h4>
+                                    <small class="text-muted">Faces Detected</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-warning mb-0" id="motionEvents">0</h4>
+                                    <small class="text-muted">Motion Events</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-info mb-0" id="currentFPS">0</h4>
+                                    <small class="text-muted">FPS</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <small class="text-muted">Runtime: <span id="runtime">0s</span></small>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted">Avg Processing Time: <span id="avgProcessingTime">0ms</span></small>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="resetStats()">
+                                <i class="fas fa-redo me-1"></i>Reset Statistics
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="col-lg-4">
+                <div class="control-panel">
+                    <h5 class="mb-4">
+                        <i class="fas fa-sliders-h me-2"></i>Processing Controls
+                    </h5>
+
+                    <!-- Detection Options -->
+                    <div class="processing-option">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><i class="fas fa-user-friends me-2"></i>Face Detection</span>
+                            <label class="switch">
+                                <input type="checkbox" id="faceDetection" onchange="updateOption('face_detection', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="processing-option">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><i class="fas fa-running me-2"></i>Motion Detection</span>
+                            <label class="switch">
+                                <input type="checkbox" id="motionDetection" onchange="updateOption('motion_detection', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="processing-option">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><i class="fas fa-crosshairs me-2"></i>Object Tracking</span>
+                            <label class="switch">
+                                <input type="checkbox" id="objectTracking" onchange="updateOption('object_tracking', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Filter Options -->
+                    <div class="processing-option">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><i class="fas fa-border-style me-2"></i>Edge Detection</span>
+                            <label class="switch">
+                                <input type="checkbox" id="edgeDetection" onchange="updateOption('edge_detection', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="processing-option">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><i class="fas fa-eye-slash me-2"></i>Blur Effect</span>
+                            <label class="switch">
+                                <input type="checkbox" id="blurEffect" onchange="updateOption('blur', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="processing-option">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><i class="fas fa-adjust me-2"></i>Grayscale</span>
+                            <label class="switch">
+                                <input type="checkbox" id="grayscale" onchange="updateOption('grayscale', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Adjustment Controls -->
+                    <div class="processing-option">
+                        <label><i class="fas fa-sun me-2"></i>Brightness</label>
+                        <input type="range" class="range-slider" id="brightness" min="-100" max="100" value="0" onchange="updateOption('brightness', parseInt(this.value))">
+                        <div class="d-flex justify-content-between">
+                            <small>-100</small>
+                            <small id="brightnessValue">0</small>
+                            <small>100</small>
+                        </div>
+                    </div>
+
+                    <div class="processing-option">
+                        <label><i class="fas fa-circle-half-stroke me-2"></i>Contrast</label>
+                        <input type="range" class="range-slider" id="contrast" min="0.1" max="3.0" step="0.1" value="1.0" onchange="updateOption('contrast', parseFloat(this.value))">
+                        <div class="d-flex justify-content-between">
+                            <small>0.1</small>
+                            <small id="contrastValue">1.0</small>
+                            <small>3.0</small>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="mt-4">
+                        <button class="btn btn-outline-light w-100 mb-2" onclick="startTracking()">
+                            <i class="fas fa-bullseye me-2"></i>Start Object Tracking
+                        </button>
+                        <button class="btn btn-outline-light w-100 mb-2" onclick="stopTracking()">
+                            <i class="fas fa-stop-circle me-2"></i>Stop Tracking
+                        </button>
+                        <button class="btn btn-outline-light w-100" onclick="resetAllOptions()">
+                            <i class="fas fa-undo me-2"></i>Reset All Options
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Camera Selection -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-video me-2"></i>Camera Settings
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="cameraSelect" class="form-label">Camera Source</label>
+                            <select class="form-select" id="cameraSelect">
+                                <option value="0">Default Camera (0)</option>
+                                <option value="1">External Camera (1)</option>
+                                <option value="2">Camera 2</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-sm w-100" onclick="switchCamera()">
+                            <i class="fas fa-exchange-alt me-1"></i>Switch Camera
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Features and Cloud Integration -->
+            <div class="col-md-6 mb-4">
+                <div class="card control-panel h-100">
+                    <div class="card-body">
+                        <h4 class="mb-4"><i class="fas fa-brain"></i> Advanced Features</h4>
+                        
+                        <div class="processing-option">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5>Advanced Analysis</h5>
+                                    <p class="text-light small">Enable AI-powered video analytics</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="advanced-analysis-toggle" onchange="updateOption('advanced_analysis', this.checked)">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="processing-option">
+                            <h5>Cloud Integration</h5>
+                            <p class="text-light small mb-3">Upload frames and analysis to cloud</p>
+                            <div class="d-flex gap-2 mb-2">
+                                <button class="btn btn-primary btn-sm" id="cloud-upload-btn" onclick="uploadToCloud()">
+                                    <i class="fas fa-cloud-upload-alt"></i> Upload Frame
+                                </button>
+                                <button class="btn btn-info btn-sm" onclick="viewCloudUploads()">
+                                    <i class="fas fa-external-link-alt"></i> View
+                                </button>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success btn-sm" onclick="downloadModels()">
+                                    <i class="fas fa-download"></i> Download Models
+                                </button>
+                                <button class="btn btn-warning btn-sm" onclick="exportData()">
+                                    <i class="fas fa-file-export"></i> Export Data
+                                </button>
+                            </div>
+                            <div id="cloud-status" class="mt-2 small"></div>
+                        </div>
+                        
+                        <div class="processing-option">
+                            <h5>Analytics Quality</h5>
+                            <div class="progress mb-3">
+                                <div id="quality-score" class="progress-bar bg-gradient" role="progressbar" style="width: 0%;" 
+                                    aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-4 text-center">
+                                    <div class="h3" id="objects-count">0</div>
+                                    <div class="small">Objects</div>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <div class="h3" id="faces-count">0</div>
+                                    <div class="small">Faces</div>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <div class="h3" id="fps-count">0</div>
+                                    <div class="small">FPS</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Upload and Configuration -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-upload me-2"></i>Video Upload & Configuration
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="videoFileInput" class="form-label">Upload Video File</label>
+                            <input type="file" class="form-control" id="videoFileInput" accept="video/*" onchange="uploadVideoFile(this)">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="streamUrl" class="form-label">Stream URL (Optional)</label>
+                            <input type="url" class="form-control" id="streamUrl" placeholder="rtmp://example.com/stream">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="streamFps" class="form-label">Stream FPS</label>
+                            <select class="form-select" id="streamFps">
+                                <option value="15">15 FPS</option>
+                                <option value="24">24 FPS</option>
+                                <option value="30" selected>30 FPS</option>
+                                <option value="60">60 FPS</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="streamQuality" class="form-label">Stream Quality</label>
+                            <select class="form-select" id="streamQuality">
+                                <option value="480p">480p</option>
+                                <option value="720p" selected>720p</option>
+                                <option value="1080p">1080p</option>
+                            </select>
+                        </div>
+                        
+                        <button class="btn btn-primary w-100" onclick="updateStreamConfig()">
+                            <i class="fas fa-cog me-2"></i>Update Stream Configuration
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Health Status -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-heart me-2"></i>System Health
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>API Status:</span>
+                            <span id="api-status" class="badge bg-success">Online</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <span>Advanced Features:</span>
+                            <span id="advanced-status" class="badge bg-warning">Checking...</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <span>Cloud Connection:</span>
+                            <span id="cloud-connection-status" class="badge bg-secondary">Unknown</span>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm w-100 mt-3" onclick="checkSystemHealth()">
+                            <i class="fas fa-sync me-1"></i>Refresh Health Check
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let processingEnabled = false;
+        let trackingMode = false;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOptions();
+            startStatsUpdater();
+            checkConnection();
+        });
+
+        // Update statistics periodically
+        function startStatsUpdater() {
+            setInterval(updateStats, 1000);
+        }
+
+        // Check API connection
+        async function checkConnection() {
+            try {
+                const response = await fetch('/api/stats');
+                if (response.ok) {
+                    updateConnectionStatus(true);
+                } else {
+                    updateConnectionStatus(false);
+                }
+            } catch (error) {
+                updateConnectionStatus(false);
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const statusElement = document.getElementById('connectionStatus');
+            if (connected) {
+                statusElement.innerHTML = '<i class="fas fa-circle text-success me-1"></i>Connected';
+            } else {
+                statusElement.innerHTML = '<i class="fas fa-circle text-danger me-1"></i>Disconnected';
+            }
+        }
+
+        // Camera controls
+        async function startCamera() {
+            const cameraIndex = document.getElementById('cameraSelect').value;
+            try {
+                const response = await fetch('/api/start_camera', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ camera_index: parseInt(cameraIndex) })
+                });
+                const data = await response.json();
+                showAlert(data.message, data.success ? 'success' : 'danger');
+            } catch (error) {
+                showAlert('Failed to start camera', 'danger');
+            }
+        }
+
+        async function stopCamera() {
+            try {
+                const response = await fetch('/api/stop_camera', { method: 'POST' });
+                const data = await response.json();
+                showAlert(data.message, 'success');
+            } catch (error) {
+                showAlert('Failed to stop camera', 'danger');
+            }
+        }
+
+        async function switchCamera() {
+            await stopCamera();
+            setTimeout(startCamera, 1000);
+        }
+
+        // Processing controls
+        async function toggleProcessing() {
+            try {
+                const response = await fetch('/api/toggle_processing', { method: 'POST' });
+                const data = await response.json();
+                processingEnabled = data.processing_enabled;
+                
+                const toggleText = document.getElementById('processingToggleText');
+                toggleText.textContent = processingEnabled ? 'Disable Processing' : 'Enable Processing';
+                
+                showAlert(data.message, 'success');
+            } catch (error) {
+                showAlert('Failed to toggle processing', 'danger');
+            }
+        }
+
+        async function updateOption(option, value) {
+            try {
+                const options = {};
+                options[option] = value;
+                
+                const response = await fetch('/api/update_options', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(options)
+                });
+                
+                // Update display values for sliders
+                if (option === 'brightness') {
+                    document.getElementById('brightnessValue').textContent = value;
+                } else if (option === 'contrast') {
+                    document.getElementById('contrastValue').textContent = value;
+                }
+                
+            } catch (error) {
+                showAlert('Failed to update option', 'danger');
+            }
+        }
+
+        async function loadOptions() {
+            try {
+                const response = await fetch('/api/get_options');
+                const options = await response.json();
+                
+                // Update UI controls
+                document.getElementById('faceDetection').checked = options.face_detection;
+                document.getElementById('motionDetection').checked = options.motion_detection;
+                document.getElementById('objectTracking').checked = options.object_tracking;
+                document.getElementById('edgeDetection').checked = options.edge_detection;
+                document.getElementById('blurEffect').checked = options.blur;
+                document.getElementById('grayscale').checked = options.grayscale;
+                document.getElementById('brightness').value = options.brightness;
+                document.getElementById('contrast').value = options.contrast;
+                document.getElementById('brightnessValue').textContent = options.brightness;
+                document.getElementById('contrastValue').textContent = options.contrast;
+                
+            } catch (error) {
+                console.error('Failed to load options:', error);
+            }
+        }
+
+        // Object tracking
+        async function startTracking() {
+            showAlert('Click and drag on the video to select an object to track', 'info');
+            trackingMode = true;
+        }
+
+        async function stopTracking() {
+            try {
+                const response = await fetch('/api/stop_tracking', { method: 'POST' });
+                const data = await response.json();
+                showAlert(data.message, 'success');
+                trackingMode = false;
+            } catch (error) {
+                showAlert('Failed to stop tracking', 'danger');
+            }
+        }
+
+        // Frame capture
+        async function saveFrame() {
+            try {
+                const response = await fetch('/api/save_frame', { method: 'POST' });
+                const data = await response.json();
+                showAlert(data.message, data.success ? 'success' : 'danger');
+            } catch (error) {
+                showAlert('Failed to save frame', 'danger');
+            }
+        }
+
+        // Statistics
+        async function updateStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                
+                document.getElementById('framesProcessed').textContent = stats.frames_processed;
+                document.getElementById('facesDetected').textContent = stats.faces_detected;
+                document.getElementById('motionEvents').textContent = stats.motion_events;
+                document.getElementById('currentFPS').textContent = stats.fps;
+                document.getElementById('runtime').textContent = stats.runtime_seconds + 's';
+                document.getElementById('avgProcessingTime').textContent = stats.avg_processing_time_ms + 'ms';
+                
+                // Update processing status
+                if (processingEnabled !== stats.processing_enabled) {
+                    processingEnabled = stats.processing_enabled;
+                    const toggleText = document.getElementById('processingToggleText');
+                    toggleText.textContent = processingEnabled ? 'Disable Processing' : 'Enable Processing';
+                }
+                
+            } catch (error) {
+                // console.error('Failed to update stats:', error);
+            }
+        }
+
+        async function resetStats() {
+            try {
+                const response = await fetch('/api/reset_stats', { method: 'POST' });
+                const data = await response.json();
+                showAlert(data.message, 'success');
+            } catch (error) {
+                showAlert('Failed to reset statistics', 'danger');
+            }
+        }
+
+        // Reset all options
+        function resetAllOptions() {
+            // Reset all checkboxes
+            document.getElementById('faceDetection').checked = false;
+            document.getElementById('motionDetection').checked = false;
+            document.getElementById('objectTracking').checked = false;
+            document.getElementById('edgeDetection').checked = false;
+            document.getElementById('blurEffect').checked = false;
+            document.getElementById('grayscale').checked = false;
+            
+            // Reset sliders
+            document.getElementById('brightness').value = 0;
+            document.getElementById('contrast').value = 1.0;
+            document.getElementById('brightnessValue').textContent = '0';
+            document.getElementById('contrastValue').textContent = '1.0';
+            
+            // Update all options
+            const options = {
+                face_detection: false,
+                motion_detection: false,
+                object_tracking: false,
+                edge_detection: false,
+                blur: false,
+                grayscale: false,
+                brightness: 0,
+                contrast: 1.0
+            };
+            
+            fetch('/api/update_options', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(options)
+            });
+            
+            showAlert('All options reset', 'success');
+        }
+
+        // Utility functions
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertId = 'alert_' + Date.now();
+            
+            const alertHTML = `
+                <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            alertContainer.insertAdjacentHTML('beforeend', alertHTML);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                const alert = document.getElementById(alertId);
+                if (alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
+            }, 5000);
+        }
+
+        // Advanced Features Functions
+        async function uploadToCloud() {
+            try {
+                document.getElementById('cloud-status').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+                const response = await fetch('/api/cloud_upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ frame_type: 'current' })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('cloud-status').innerHTML = '<i class="fas fa-check text-success"></i> Upload successful';
+                    showAlert('Frame uploaded to cloud successfully', 'success');
+                } else {
+                    document.getElementById('cloud-status').innerHTML = '<i class="fas fa-times text-danger"></i> Upload failed';
+                    showAlert('Cloud upload failed: ' + data.message, 'danger');
+                }
+            } catch (error) {
+                document.getElementById('cloud-status').innerHTML = '<i class="fas fa-times text-danger"></i> Upload error';
+                showAlert('Cloud upload error: ' + error.message, 'danger');
+            }
+        }
+
+        async function viewCloudUploads() {
+            try {
+                const response = await fetch('/api/cloud_uploads');
+                const data = await response.json();
+                
+                if (data.success && data.uploads.length > 0) {
+                    let uploadsList = data.uploads.map(upload => 
+                        `<li>${upload.filename} - ${upload.timestamp}</li>`
+                    ).join('');
+                    showAlert(`Recent uploads:<ul>${uploadsList}</ul>`, 'info');
+                } else {
+                    showAlert('No recent uploads found', 'info');
+                }
+            } catch (error) {
+                showAlert('Failed to fetch cloud uploads', 'danger');
+            }
+        }
+
+        async function downloadModels() {
+            try {
+                showAlert('Starting model download...', 'info');
+                const response = await fetch('/api/download_models', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('Models downloaded successfully', 'success');
+                } else {
+                    showAlert('Model download failed: ' + data.message, 'danger');
+                }
+            } catch (error) {
+                showAlert('Model download error: ' + error.message, 'danger');
+            }
+        }
+
+        async function exportData() {
+            try {
+                const response = await fetch('/api/export_data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ format: 'json' })
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'video_analysis_data.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    showAlert('Data exported successfully', 'success');
+                } else {
+                    showAlert('Export failed', 'danger');
+                }
+            } catch (error) {
+                showAlert('Export error: ' + error.message, 'danger');
+            }
+        }
+
+        async function uploadVideoFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('video', file);
+
+            try {
+                showAlert('Uploading video file...', 'info');
+                const response = await fetch('/api/upload_video', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Video uploaded successfully', 'success');
+                } else {
+                    showAlert('Video upload failed: ' + data.message, 'danger');
+                }
+            } catch (error) {
+                showAlert('Video upload error: ' + error.message, 'danger');
+            }
+        }
+
+        async function updateStreamConfig() {
+            const config = {
+                fps: parseInt(document.getElementById('streamFps').value),
+                quality: document.getElementById('streamQuality').value,
+                url: document.getElementById('streamUrl').value || null
+            };
+
+            try {
+                const response = await fetch('/api/stream_config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Stream configuration updated', 'success');
+                } else {
+                    showAlert('Configuration update failed: ' + data.message, 'danger');
+                }
+            } catch (error) {
+                showAlert('Configuration error: ' + error.message, 'danger');
+            }
+        }
+
+        async function checkSystemHealth() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+
+                // Update API status
+                const apiStatus = document.getElementById('api-status');
+                apiStatus.textContent = data.status === 'healthy' ? 'Online' : 'Offline';
+                apiStatus.className = `badge ${data.status === 'healthy' ? 'bg-success' : 'bg-danger'}`;
+
+                // Update advanced features status
+                const advancedStatus = document.getElementById('advanced-status');
+                if (data.advanced_analyzer_available) {
+                    advancedStatus.textContent = 'Available';
+                    advancedStatus.className = 'badge bg-success';
+                } else {
+                    advancedStatus.textContent = 'Unavailable';
+                    advancedStatus.className = 'badge bg-warning';
+                }
+
+                // Update cloud connection status
+                const cloudStatus = document.getElementById('cloud-connection-status');
+                if (data.cloud_config_complete) {
+                    cloudStatus.textContent = 'Connected';
+                    cloudStatus.className = 'badge bg-success';
+                } else {
+                    cloudStatus.textContent = 'Not Configured';
+                    cloudStatus.className = 'badge bg-warning';
+                }
+
+                showAlert('Health check completed', 'success');
+            } catch (error) {
+                showAlert('Health check failed: ' + error.message, 'danger');
+                
+                // Set error states
+                document.getElementById('api-status').textContent = 'Error';
+                document.getElementById('api-status').className = 'badge bg-danger';
+            }
+        }
+
+        // Enhanced stats update to include advanced analytics
+        async function updateAdvancedStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                
+                // Update advanced analytics display
+                if (stats.advanced_analytics) {
+                    document.getElementById('objects-count').textContent = stats.advanced_analytics.objects_detected || 0;
+                    document.getElementById('faces-count').textContent = stats.advanced_analytics.faces_detected || 0;
+                    document.getElementById('fps-count').textContent = Math.round(stats.fps || 0);
+                    
+                    // Update quality score
+                    const qualityScore = stats.advanced_analytics.quality_score || 0;
+                    const qualityBar = document.getElementById('quality-score');
+                    qualityBar.style.width = `${qualityScore}%`;
+                    qualityBar.textContent = `${qualityScore}%`;
+                    qualityBar.setAttribute('aria-valuenow', qualityScore);
+                }
+            } catch (error) {
+                // console.error('Failed to update advanced stats:', error);
+            }
+        }
+
+        // Initialize system health check on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkSystemHealth();
+            
+            // Update advanced stats along with regular stats
+            const originalUpdateStats = updateStats;
+            updateStats = async function() {
+                await originalUpdateStats();
+                await updateAdvancedStats();
+            };
+        });
+
+        // Video stream click handler for object tracking
+        document.getElementById('videoStream').addEventListener('click', function(e) {
+            if (trackingMode) {
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // For simplicity, create a small bounding box around the click
+                const bbox = [x - 25, y - 25, 50, 50];
+                
+                fetch('/api/start_tracking', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bbox: bbox })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    showAlert(data.message, data.success ? 'success' : 'danger');
+                    trackingMode = false;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
